@@ -1,8 +1,29 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.0)
+
 project(diablo_base)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(
+		-std=c++17
+		-Wno-psabi
+)
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+add_definitions(-D_LOG_CONSOLE)
+
+FILE(GLOB OSDK_LIB_SRCS
+        ../../diablo-sdk-v1/api/src/*.cpp
+)
+add_library(
+    ${PROJECT_NAME}
+    STATIC
+    ${OSDK_LIB_SRCS}
+)
+
+include_directories(
+  ../../diablo-sdk-v1/api/inc
+  #inc/diablo_base
+)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -11,6 +32,10 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   roscpp
   std_msgs
+  rospy
+  std_msgs
+  message_generation
+  tf 
 )
 
 ## System dependencies are found with CMake's conventions
@@ -47,11 +72,12 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  angles.msg
+  disps.msg
+  coors.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -68,10 +94,12 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+  #message_generation
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -103,11 +131,12 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES diablo_base
-#  CATKIN_DEPENDS geometry_msgs roscpp std_msgs
-#  DEPENDS system_lib
-)
+        #  INCLUDE_DIRS include
+        #  LIBRARIES
+        CATKIN_DEPENDS
+        message_runtime
+		# DEPENDS system_lib
+    )
 
 ###########
 ## Build ##
@@ -119,6 +148,51 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
 )
+link_libraries(
+        ${catkin_LIBRARIES}
+    )
+
+add_executable(tf_listener ${OSDK_LIB_SRCS}
+${CMAKE_CURRENT_SOURCE_DIR}/src/test_transform/tf_listener.cpp)
+add_dependencies(tf_listener diablo_sdk_generate_messages_cpp)
+target_link_libraries(tf_listener PRIVATE Threads::Threads)
+
+add_executable(tf_broadcaster ${OSDK_LIB_SRCS}
+${CMAKE_CURRENT_SOURCE_DIR}/src/test_transform/tf_broadcaster.cpp)
+add_dependencies(tf_broadcaster diablo_sdk_generate_messages_cpp)
+target_link_libraries(tf_broadcaster PRIVATE Threads::Threads)
+
+add_executable(formula_quat ${OSDK_LIB_SRCS}
+${CMAKE_CURRENT_SOURCE_DIR}/src/test_formula/formula_quat.cpp)
+add_dependencies(formula_quat diablo_sdk_generate_messages_cpp)
+target_link_libraries(formula_quat PRIVATE Threads::Threads)
+
+add_executable(formula_1 ${OSDK_LIB_SRCS}
+${CMAKE_CURRENT_SOURCE_DIR}/src/test_formula/formula_1.cpp)
+add_dependencies(formula_1 diablo_sdk_generate_messages_cpp)
+target_link_libraries(formula_1 PRIVATE Threads::Threads)
+
+add_executable(formula_2 ${OSDK_LIB_SRCS}
+${CMAKE_CURRENT_SOURCE_DIR}/src/test_formula/formula_2.cpp)
+add_dependencies(formula_2 diablo_sdk_generate_messages_cpp)
+target_link_libraries(formula_2 PRIVATE Threads::Threads)
+
+add_executable(formula_velocity ${OSDK_LIB_SRCS}
+${CMAKE_CURRENT_SOURCE_DIR}/src/test_formula/formula_velocity.cpp)
+add_dependencies(formula_velocity diablo_sdk_generate_messages_cpp)
+target_link_libraries(formula_velocity PRIVATE Threads::Threads)
+
+add_executable(test_base ${OSDK_LIB_SRCS}
+${CMAKE_CURRENT_SOURCE_DIR}/src/read_and_control/test_base.cpp)
+add_dependencies(test_base diablo_sdk_generate_messages_cpp)
+target_link_libraries(test_base PRIVATE Threads::Threads)
+
+add_executable(test_base_custom ${OSDK_LIB_SRCS}
+${CMAKE_CURRENT_SOURCE_DIR}/src/read_and_control/test_base_custom.cpp)
+add_dependencies(test_base_custom diablo_sdk_generate_messages_cpp)
+target_link_libraries(test_base_custom PRIVATE Threads::Threads)
+
+
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
