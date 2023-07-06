@@ -20,152 +20,98 @@
 #include "diablo_base/disps.h"
 #include "diablo_base/coors.h"
 
+#include <tf/tf.h>
+#include <tf/transform_broadcaster.h>
+
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-float vals[] = {
-    0,0,0,
-    0,0,0,0,
-    0,0,0,
-    0,0,0};
 
-float right_pos, left_pos, right_enc, left_enc, right_init, right_offset, left_init, left_offset;
-
-float xcor = 0;
-float ycor = 0;
-float cent_prev = 0;
-
-int init_values = 0;
-int init_quat_values = 0;
-float init_yaw = 0;
-
-float radius = 9;
-
-float x_cor = 0;
-float y_cor = 0;
-
-float curr_drift = 0;
-float avg_drift[2]={0,0};
-
-float abs_yaw, abs_yaw_prev = 0;
-
-
-void gyro_callback(const diablo_sdk::OSDK_GYRO::ConstPtr& information){
-    vals[10] = information->x;
-    vals[11] = information->y;
-    vals[12] = information->z;
-}
-
-void quat_callback(const diablo_sdk::OSDK_QUATERNION::ConstPtr& information){
-    vals[3] = information->x;
-    vals[4] = information->y;
-    vals[5] = information->z;
-    vals[6] = information->w;
-
-    if(init_quat_values < 10){
-        double siny_cosp = 2 * (vals[6] * vals[5] + vals[3] * vals[4]);
-        double cosy_cosp = 1 - 2 * (vals[4] * vals[4] + vals[5] * vals[5]);
-        if (init_quat_values < 2){
-            init_yaw = std::atan2(siny_cosp, cosy_cosp);
-        }
-        curr_drift = (abs_yaw - abs_yaw_prev)/0.01;
-        abs_yaw_prev = abs_yaw;
-        abs_yaw = std::atan2(siny_cosp, cosy_cosp);
-        init_quat_values++;
-    }
-        avg_drift[0] = (avg_drift[0]*avg_drift[1] + curr_drift)/(avg_drift[1]+1);
-        avg_drift[1]= avg_drift[1] + 1;
-
-    if(init_quat_values==22){
-        std::cout << "Start motion"  << std::endl;
-    }
-}
+float right_speed_1, left_speed_1 = 0;
+float xcor, ycor, theta = 0;
+int radius = 9;
+float right_dist, left_dist, centre_dist = 0;
+float xold, yold, theta_old = 0;
 
 void motor_callback(const diablo_sdk::OSDK_LEGMOTORS::ConstPtr& information){
-    right_pos = information->right_wheel_pos;
-    left_pos = information->left_wheel_pos;
-    right_enc = information->right_wheel_enc_rev;
-    left_enc = information->left_wheel_enc_rev;
-    if(init_values < 2){
-        right_init = information->right_wheel_enc_rev;
-        left_init = information->left_wheel_enc_rev;
-        right_offset = information->right_wheel_pos;
-        left_offset = information->left_wheel_pos;
-        init_values++;
-    }
-
+    right_speed_1= information->right_wheel_vel;
+    left_speed_1 = information->left_wheel_vel;
 }
+
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "status_node");
     ros::NodeHandle n;
-    ros::Publisher pub = n.advertise<nav_msgs::Odometry>("/all_data", 10);
-    ros::Publisher pub2 = n.advertise<diablo_base::angles>("/angles", 10);
-    ros::Publisher pub3 = n.advertise<diablo_base::disps>("/displacement", 10);
-    ros::Publisher pub4 = n.advertise<diablo_base::coors>("/coordinates", 10);
+    ros::Publisher ODOMPub = n.advertise<nav_msgs::Odometry>("/all_data", 10);
+    ros::Publisher COORPub = n.advertise<diablo_base::coors>("/coordinates", 10);
 
-    ros::Subscriber sub_gyr = n.subscribe("/robot_status_example/diablo_ros_GYRO_b", 10, gyro_callback);
-    ros::Subscriber sub_quat = n.subscribe("/robot_status_example/diablo_ros_QUATERNION_b", 10, quat_callback);
     ros::Subscriber sub_motor = n.subscribe("/robot_status_example/diablo_ros_LEGMOTORS_b", 10, motor_callback);
 
+    tf::TransformBroadcaster broadcaster;
+    
     ros::Rate loop_rate(100);
     while(ros::ok()){
-
-        diablo_base::angles ang;
-        double sinr_cosp = 2 * (vals[6]* vals[3] + vals[4] * vals[5]);
-        double cosr_cosp = 1 - 2 * (vals[3] * vals[3] + vals[4] * vals[4]);
-        ang.roll = std::atan2(sinr_cosp, cosr_cosp);
-        double sinp = std::sqrt(1 + 2 * (vals[6] * vals[4] - vals[3] * vals[5]));
-        double cosp = std::sqrt(1 - 2 * (vals[6] * vals[4] - vals[3] * vals[5]));
-        ang.pitch = 2 * std::atan2(sinp, cosp) - M_PI / 2;
-        ang.average_drift = avg_drift[0];
-        ang.yaw = abs_yaw;
-        ang.init_yaw = init_yaw;
-        ang.tf_yaw = abs_yaw - init_yaw;
-        ang.no_drift_yaw = abs_yaw - init_yaw - avg_drift[0]*0.01;
         
-        
-
-
-        diablo_base::disps dps;
-        dps.right = radius*(2 * M_PI * (right_enc - right_init) + (right_pos - right_offset));
-        dps.left = radius*(2 * M_PI * (left_enc - left_init) + (left_pos - left_offset));
-        dps.centre = (dps.right + dps.left)/2;
-        
-
-        right_init = right_enc;
-        right_offset = right_pos;
-        left_init = left_enc;
-        left_offset = left_pos;
+        right_dist = (right_speed_1)*0.01;
+        left_dist = (left_speed_1)*0.01;
+        centre_dist = (right_dist + left_dist)/2;
+        theta = theta_old + (((1.0/5.25)*(right_dist-left_dist)));
+        // if(theta > 2*M_PI){
+        //     theta = theta - 2*M_PI;
+        // }
+        // if(theta < 0){
+        //     theta = theta + 2*M_PI;
+        // }
+        xcor = xold + (centre_dist)*std::cos(theta);
+        ycor = yold + (centre_dist)*std::sin(theta);
 
         diablo_base::coors crs;
-        xcor = xcor + (dps.centre)*std::cos(ang.yaw - init_yaw);
-        ycor = ycor + (dps.centre)*std::sin(ang.yaw - init_yaw);
         crs.x = xcor;
         crs.y = ycor;
+        crs.theta = theta;
+        COORPub.publish(crs);
 
-        nav_msgs::Odometry message;
-        message.pose.pose.position.x = xcor;
-        message.pose.pose.position.y = ycor;
-        message.pose.pose.position.z = 0;
-        message.pose.pose.orientation.x = vals[3];
-        message.pose.pose.orientation.y = vals[4];
-        message.pose.pose.orientation.z = vals[5];
-        message.pose.pose.orientation.w = vals[6];
-        message.twist.twist.linear.x= 0;
-        message.twist.twist.linear.y= 0;
-        message.twist.twist.linear.z= 0;
-        message.twist.twist.angular.x=vals[10];
-        message.twist.twist.angular.y=vals[11];
-        message.twist.twist.angular.z=vals[12];
+        tf2::Quaternion quaternion;
+        tf2::Matrix3x3 rotation;
+        rotation.setRPY(0, 0, theta); 
+        rotation.getRotation(quaternion);
 
+        broadcaster.sendTransform(
+            tf::StampedTransform(
+            tf::Transform(tf::Quaternion(quaternion.x(), quaternion.y(), quaternion.z(), quaternion.w()), tf::Vector3(xcor, ycor, 0)),
+            ros::Time::now(),"odom", "base_link")
+        );
 
-        pub.publish(message);
-        pub2.publish(ang);
-        pub3.publish(dps);
-        pub4.publish(crs);
+        broadcaster.sendTransform(
+            tf::StampedTransform(
+            tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0, 0, 0.5)),
+            ros::Time::now(),"base_link", "laser")
+        );
 
+        nav_msgs::Odometry odom_data;
+        odom_data.header.frame_id = "odom";
+        odom_data.child_frame_id = "base_link";
+        odom_data.pose.pose.position.x = xcor;
+        odom_data.pose.pose.position.y = ycor;
+        odom_data.pose.pose.position.z = 0;
+        odom_data.pose.pose.orientation.x = quaternion.x();
+        odom_data.pose.pose.orientation.y = quaternion.y();
+        odom_data.pose.pose.orientation.z = quaternion.z();
+        odom_data.pose.pose.orientation.w = quaternion.w();
+        odom_data.twist.twist.linear.x= ((right_speed_1+left_speed_1)/2)*std::cos(theta); 
+        odom_data.twist.twist.linear.y= ((right_speed_1+left_speed_1)/2)*std::cos(theta); 
+        odom_data.twist.twist.linear.z= 0;
+        odom_data.twist.twist.angular.x=0;
+        odom_data.twist.twist.angular.y=0;
+        odom_data.twist.twist.angular.z=(theta-theta_old)/0.01;
+        ODOMPub.publish(odom_data);
 
+        xold = xcor;
+        yold = ycor;
+        theta_old = theta;
         ros::spinOnce();
         loop_rate.sleep();
     }
