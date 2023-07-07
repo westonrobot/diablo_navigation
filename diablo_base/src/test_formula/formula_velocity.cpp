@@ -55,10 +55,10 @@ int main(int argc, char** argv){
     ros::Rate loop_rate(100);
     while(ros::ok()){
         
-        right_dist = (right_speed_1)*0.01;
-        left_dist = (left_speed_1)*0.01;
+        right_dist = (right_speed_1)*0.001;
+        left_dist = (left_speed_1)*0.001;
         centre_dist = (right_dist + left_dist)/2;
-        theta = theta_old + (((1.0/5.25)*(right_dist-left_dist)));
+        theta = theta_old + (((1.0/0.525)*(right_dist-left_dist)));
         // if(theta > 2*M_PI){
         //     theta = theta - 2*M_PI;
         // }
@@ -87,7 +87,7 @@ int main(int argc, char** argv){
 
         broadcaster.sendTransform(
             tf::StampedTransform(
-            tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0, 0, 0.5)),
+            tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.3, 0, 1.5)),
             ros::Time::now(),"base_link", "laser")
         );
 
