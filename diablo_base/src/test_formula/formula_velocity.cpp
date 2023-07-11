@@ -29,14 +29,19 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 
+#include <chrono>
+
 
 float right_speed_1, left_speed_1 = 0;
 float xcor, ycor, theta = 0;
-int radius = 9;
+float radius = 0.09;
 float right_dist, left_dist, centre_dist = 0;
 float xold, yold, theta_old = 0;
 
+float duration;
+
 void motor_callback(const diablo_sdk::OSDK_LEGMOTORS::ConstPtr& information){
+    
     right_speed_1= information->right_wheel_vel;
     left_speed_1 = information->left_wheel_vel;
 }
@@ -53,18 +58,25 @@ int main(int argc, char** argv){
     tf::TransformBroadcaster broadcaster;
     
     ros::Rate loop_rate(100);
+
+
     while(ros::ok()){
         
-        right_dist = (right_speed_1)*0.001;
-        left_dist = (left_speed_1)*0.001;
+        auto startTime = std::chrono::high_resolution_clock::now();
+
+        right_dist = (right_speed_1)*radius*duration;
+        left_dist = (left_speed_1)*radius*duration;
+        
         centre_dist = (right_dist + left_dist)/2;
-        theta = theta_old + (((1.0/0.525)*(right_dist-left_dist)));
-        // if(theta > 2*M_PI){
-        //     theta = theta - 2*M_PI;
-        // }
-        // if(theta < 0){
-        //     theta = theta + 2*M_PI;
-        // }
+        
+        theta = theta_old + (((1.0/0.53)*(right_dist-left_dist)));
+
+        if(theta > 2*M_PI){
+            theta = theta - 2*M_PI;
+        }
+        if(theta < 0){
+            theta = theta + 2*M_PI;
+        }
         xcor = xold + (centre_dist)*std::cos(theta);
         ycor = yold + (centre_dist)*std::sin(theta);
 
@@ -106,14 +118,18 @@ int main(int argc, char** argv){
         odom_data.twist.twist.linear.z= 0;
         odom_data.twist.twist.angular.x=0;
         odom_data.twist.twist.angular.y=0;
-        odom_data.twist.twist.angular.z=(theta-theta_old)/0.01;
+        odom_data.twist.twist.angular.z=(theta-theta_old)/duration;
         ODOMPub.publish(odom_data);
 
         xold = xcor;
         yold = ycor;
         theta_old = theta;
+
         ros::spinOnce();
         loop_rate.sleep();
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - startTime).count() / 1000000.00 ;
+        
     }
     
     return 0;

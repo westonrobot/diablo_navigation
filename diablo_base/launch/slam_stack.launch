@@ -18,27 +18,14 @@
         <param name="lstep" value="0.01" />
         <param name="astep" value="0.01" />
         <param name="iterations" value="5" />
-        <param name="linearUpdate" value="0.1" />
-        <param name="angularUpdate" value="0.1" />
+        <param name="linearUpdate" value="0.05" />
+        <param name="angularUpdate" value="0.05" />
         <param name="xmin" value="-10.0" />
         <param name="xmax" value="10.0" />
         <param name="ymin" value="-10.0" />
         <param name="ymax" value="10.0" />
         <param name="delta" value="0.02" />
+        <param name="resampleThreshold" value="0.2" />
+        <param name="particles" value="40" />
     </node>
-
-    <node name="amcl" pkg="amcl" type="amcl">
-        <remap from="scan" to="scan" />
-        <param name="use_map_topic" value="true" />
-        <param name="odom_frame_id" value="odom" />
-        <param name="base_frame_id" value="base_link" />
-        <param name="global_frame_id" value="map" />
-        <param name="min_particles" value="100" />
-        <param name="max_particles" value="5000" />
-        <param name="update_min_d" value="0.1" />
-        <param name="update_min_a" value="0.1" />
-        <param name="laser_max_range" value="12.0" />
-        <param name="laser_max_beams" value="360" />
-    </node>
-
 </launch>

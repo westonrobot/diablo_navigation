@@ -192,7 +192,10 @@ ${CMAKE_CURRENT_SOURCE_DIR}/src/read_and_control/test_base_custom.cpp)
 add_dependencies(test_base_custom diablo_sdk_generate_messages_cpp)
 target_link_libraries(test_base_custom PRIVATE Threads::Threads)
 
-
+add_executable(testing ${OSDK_LIB_SRCS}
+${CMAKE_CURRENT_SOURCE_DIR}/src/testing.cpp)
+add_dependencies(testing diablo_sdk_generate_messages_cpp)
+target_link_libraries(testing PRIVATE Threads::Threads)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
