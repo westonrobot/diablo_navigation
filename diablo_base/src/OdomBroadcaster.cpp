@@ -5,19 +5,8 @@
 #include "std_msgs/Float32.h"
 #include <string>
 
-#include "diablo_sdk/OSDK_ACCL.h"
-#include "diablo_sdk/OSDK_GYRO.h"
 #include "diablo_sdk/OSDK_LEGMOTORS.h"
-#include "diablo_sdk/OSDK_POWER.h"
-#include "diablo_sdk/OSDK_QUATERNION.h"
-#include "diablo_sdk/OSDK_RC.h"
-#include "diablo_sdk/OSDK_STATUS.h"
 
-#include "Onboard_SDK_Uart_Protocol.h"
-#include "OSDK_Vehicle.hpp"
-
-#include "diablo_base/angles.h"
-#include "diablo_base/disps.h"
 #include "diablo_base/coors.h"
 
 #include <tf/tf.h>
@@ -69,7 +58,7 @@ int main(int argc, char** argv){
         
         centre_dist = (right_dist + left_dist)/2;
         
-        theta = theta_old + (((1.0/0.53)*(right_dist-left_dist)));
+        theta = theta_old + std::asin((right_dist-left_dist)/0.53);
 
         if(theta > 2*M_PI){
             theta = theta - 2*M_PI;

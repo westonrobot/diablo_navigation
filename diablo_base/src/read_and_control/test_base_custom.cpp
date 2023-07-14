@@ -2,7 +2,7 @@
 #include "ros/ros.h"
 
 #include <std_msgs/String.h>
-#include "OSDK_Vehicle.hpp"
+#include "diablo_sdk/OSDK_Vehicle.hpp"
 
 #include "diablo_sdk/OSDK_ACCL.h"
 #include "diablo_sdk/OSDK_GYRO.h"
@@ -12,7 +12,7 @@
 #include "diablo_sdk/OSDK_RC.h"
 #include "diablo_sdk/OSDK_STATUS.h"
 
-#include "Onboard_SDK_Uart_Protocol.h"
+#include "diablo_sdk/Onboard_SDK_Uart_Protocol.h"
 
 #include "nav_msgs/Odometry.h"
 #define _USE_MATH_DEFINES

@@ -3,108 +3,45 @@
 
 #include <std_msgs/String.h>
 #include "OSDK_Vehicle.hpp"
-
-#include "diablo_sdk/OSDK_ACCL.h"
-#include "diablo_sdk/OSDK_GYRO.h"
+#include "diablo_base/coors.h"
 #include "diablo_sdk/OSDK_LEGMOTORS.h"
-#include "diablo_sdk/OSDK_POWER.h"
-#include "diablo_sdk/OSDK_QUATERNION.h"
-#include "diablo_sdk/OSDK_RC.h"
-#include "diablo_sdk/OSDK_STATUS.h"
-
 #include "Onboard_SDK_Uart_Protocol.h"
+#include <geometry_msgs/Twist.h>
+#include "nav_msgs/Odometry.h"
+
+#include <tf/tf.h>
+#include <tf/transform_broadcaster.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <chrono>
+
+float right_speed_1, left_speed_1 = 0;
+float xcor, ycor, theta = 0;
+float radius = 0.09;
+float right_dist, left_dist, centre_dist = 0;
+float xold, yold, theta_old = 0;
+float duration;
 
 DIABLO::OSDK::Movement_Ctrl* pMovementCtrl;
 
-void teleop_ctrl(const std_msgs::String::ConstPtr& msg)
+void move_diablo(const geometry_msgs::Twist::ConstPtr& msg)
 {
     if(!pMovementCtrl->in_control())
     {
-        printf("to get movement ctrl.\n");
+        printf("To get movement ctrl.\n");
         uint8_t result = pMovementCtrl->obtain_control();
         return;
     }
     if(pMovementCtrl->ctrl_mode_data.height_ctrl_mode == 1)
-        pMovementCtrl->ctrl_data.up=0.0f;
+    pMovementCtrl->ctrl_data.up=0.0f;
     pMovementCtrl->ctrl_data.forward = 0.0f;
     pMovementCtrl->ctrl_data.left = 0.0f;
-    for(const char& c : msg->data)
-    {
-        switch(c)
-        {
-            case 'w':
-                pMovementCtrl->ctrl_data.forward = 1.0f;                // vel ctrl
-                break;
-            case 'a':
-                pMovementCtrl->ctrl_data.left = 1.0f;                   // angular_vel ctrl
-                break;
-            case 's':
-                pMovementCtrl->ctrl_data.forward = -1.0f;               // vel ctrl
-                break;
-            case 'd':
-                pMovementCtrl->ctrl_data.left = -1.0f;                  // angular_vel ctrl
-                break;
-            case 'q':
-                pMovementCtrl->ctrl_data.roll = -0.1f;                  // pos ctrl
-                break;
-            case 'e':
-                pMovementCtrl->ctrl_data.roll = 0.1f;                   // pos ctrl
-                break;
-            case 'r':
-                pMovementCtrl->ctrl_data.roll = 0.0f;                   // pos ctrl
-                break;
-            case 'z':
-                pMovementCtrl->SendTransformDownCmd();
-                return;
-                break;
-            case 'v':
-                pMovementCtrl->SendTransformUpCmd();
-                return;
-                break;
-            case 'n':
-                pMovementCtrl->ctrl_mode_data.height_ctrl_mode = 0;      // vel ctrl mode 
-                pMovementCtrl->ctrl_mode_cmd = true;
-                break;
-            case 'm':
-                pMovementCtrl->ctrl_mode_data.height_ctrl_mode = 1;      // pos ctrl mode
-                pMovementCtrl->ctrl_mode_cmd = true;
-                break;
-            case 'f':
-                pMovementCtrl->ctrl_data.up = 0.0f;                     //pos & angular_vel ctrl
-                break;
-            case 'g':
-                pMovementCtrl->ctrl_data.up = 0.5f;                     //pos ctrl
-                break;
-            case 'h':
-                pMovementCtrl->ctrl_data.up = 1.0f;                     //pos ctrl
-                break;
-            case 'x':
-                pMovementCtrl->ctrl_data.up = -0.1f;                    // vel ctrl
-                break;
-            case 'c':
-                pMovementCtrl->ctrl_data.up = 0.1f;                     // vel ctrl
-                break;
-            case 'y':
-                pMovementCtrl->ctrl_mode_data.pitch_ctrl_mode = 0;      // angular_vel ctrl mode
-                pMovementCtrl->ctrl_mode_cmd = true;
-                break;
-            case 'u':
-                pMovementCtrl->ctrl_mode_data.pitch_ctrl_mode = 1;      // pos ctrl mode
-                pMovementCtrl->ctrl_mode_cmd = true;
-                break;
-            case 'i':
-                pMovementCtrl->ctrl_data.pitch = -0.5f;                 // pos & angular_vel ctrl
-                break;
-            case 'o':
-                pMovementCtrl->ctrl_data.pitch = 0.0f;                  // pos & angular_vel ctrl
-                break;
-            case 'p':
-                pMovementCtrl->ctrl_data.pitch = 0.5f;                  // pos & angular_vel ctrl
-                break;
-            default:
-                break;
-        }
-    }
+    std::cout << "Goes here" << std::endl;
+    pMovementCtrl->ctrl_data.forward = (msg->linear.x);
+    pMovementCtrl->ctrl_data.left = (msg->angular.z);
+    
 
     if(pMovementCtrl->ctrl_mode_cmd)
     {uint8_t result = pMovementCtrl->SendMovementModeCtrlCmd();}
@@ -114,8 +51,8 @@ void teleop_ctrl(const std_msgs::String::ConstPtr& msg)
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "multipurpose");
-    ros::NodeHandle nh("~");
+    ros::init(argc, argv, "test_base");
+    ros::NodeHandle n("~");
 
     DIABLO::OSDK::HAL_Pi Hal;
     if(Hal.init()) return -1;
@@ -123,149 +60,94 @@ int main(int argc, char** argv)
     DIABLO::OSDK::Vehicle vehicle(&Hal);                                  //Initialize Onboard SDK
     if(vehicle.init()) return -1;
     vehicle.telemetry->activate();
+    
     pMovementCtrl = vehicle.movement_ctrl;
-    ros::Subscriber sub = nh.subscribe("/DJ_teleop", 1, teleop_ctrl); //subscribe to ROS topic
+    
+    ros::Subscriber sub = n.subscribe("/cmd_vel", 1, move_diablo); //subscribe to ROS topic
 
-    vehicle.telemetry->configTopic(DIABLO::OSDK::TOPIC_POWER, OSDK_PUSH_DATA_10Hz);
-    vehicle.telemetry->configTopic(DIABLO::OSDK::TOPIC_QUATERNION, OSDK_PUSH_DATA_100Hz);
-    vehicle.telemetry->configTopic(DIABLO::OSDK::TOPIC_ACCL, OSDK_PUSH_DATA_100Hz);
-    vehicle.telemetry->configTopic(DIABLO::OSDK::TOPIC_GYRO, OSDK_PUSH_DATA_100Hz);
     vehicle.telemetry->configTopic(DIABLO::OSDK::TOPIC_MOTOR, OSDK_PUSH_DATA_10Hz);
+    vehicle.telemetry->configUpdate();
     
-    vehicle.telemetry->configUpdate(); 
-    
-// //    vehicle.telemetry->enableLog(DIABLO::OSDK::TOPIC_POWER);
-
-    ros::Publisher ACCLPublisher = nh.advertise<diablo_sdk::OSDK_ACCL>("diablo_ros_ACCL_b", 10);
-    ros::Publisher GYROPublisher = nh.advertise<diablo_sdk::OSDK_GYRO>("diablo_ros_GYRO_b", 10);
-    ros::Publisher LEGMOTORSPublisher = nh.advertise<diablo_sdk::OSDK_LEGMOTORS>("diablo_ros_LEGMOTORS_b", 10);
-    ros::Publisher POWERPublisher = nh.advertise<diablo_sdk::OSDK_POWER>("diablo_ros_POWER_b", 10);
-    ros::Publisher QUATERNIONPublisher = nh.advertise<diablo_sdk::OSDK_QUATERNION>("diablo_ros_QUATERNION_b", 10);
-    ros::Publisher RCPublisher = nh.advertise<diablo_sdk::OSDK_RC>("diablo_ros_RC_b", 10);
-    ros::Publisher STATUSPublisher = nh.advertise<diablo_sdk::OSDK_STATUS>("diablo_ros_STATUS_b", 10);
-    
+    ros::Publisher ODOMPub = n.advertise<nav_msgs::Odometry>("/odom", 10);
+    ros::Publisher COORPub = n.advertise<diablo_base::coors>("/coordinates", 10);
     ros::Rate loop_rate(100);
+    tf::TransformBroadcaster broadcaster;
 
-    
     while (ros::ok())
     {
-        if(vehicle.telemetry->newcome & 0x40)
-        {
-            diablo_sdk::OSDK_STATUS msg;
-            msg.ctrl_mode = vehicle.telemetry->status.ctrl_mode;
-            msg.robot_mode = vehicle.telemetry->status.robot_mode;
-            msg.error = vehicle.telemetry->status.error;
-            msg.warning = vehicle.telemetry->status.warning;
-            STATUSPublisher.publish(msg);
-            vehicle.telemetry->eraseNewcomeFlag(0xBF);
-        }
-        if(vehicle.telemetry->newcome & 0x20)
-        {
-            diablo_sdk::OSDK_QUATERNION msg;
-            msg.w = vehicle.telemetry->quaternion.w;
-            msg.x = vehicle.telemetry->quaternion.x;
-            msg.y = vehicle.telemetry->quaternion.y;
-            msg.z = vehicle.telemetry->quaternion.z;
-            QUATERNIONPublisher.publish(msg);
-            //printf("Quaternion_w:\t%f\nQuaternion_x:\t%f\nQuaternion_y:\t%f\nQuaternion_z:\t%f\n", msg.w, msg.x, msg.y, msg.z);
-            vehicle.telemetry->eraseNewcomeFlag(0xDF);
-        }
-        if(vehicle.telemetry->newcome & 0x10)
-        {
-            diablo_sdk::OSDK_ACCL msg;
-            msg.x = vehicle.telemetry-> accl.x;
-            msg.y = vehicle.telemetry-> accl.y;
-            msg.z = vehicle.telemetry-> accl.z;
-            ACCLPublisher.publish(msg);
-            //printf("ACCL_X:\t%f\nACCL_Y:\t%f\nACCL_Z:\t%f\n", msg.x, msg.y, msg.z);
-            vehicle.telemetry->eraseNewcomeFlag(0xEF);
-        }
-        if(vehicle.telemetry->newcome & 0x08)
-        {
-            diablo_sdk::OSDK_GYRO msg;
-            msg.x = vehicle.telemetry->gyro.x;
-            msg.y = vehicle.telemetry->gyro.y;
-            msg.z = vehicle.telemetry->gyro.z;
-            GYROPublisher.publish(msg);
-            //printf("GYRO_X:\t%f\nGYRO_Y:\t%f\nGYRO_Z:\t%f\n", msg.x, msg.y, msg.z);
-            vehicle.telemetry->eraseNewcomeFlag(0xF7);
-        }
-        if(vehicle.telemetry->newcome & 0x04)
-        {
-            diablo_sdk::OSDK_RC msg;
-            msg.ch1 = vehicle.telemetry->rc.ch1;
-            msg.ch2 = vehicle.telemetry->rc.ch2;
-            msg.ch3 = vehicle.telemetry->rc.ch3;
-            msg.ch4 = vehicle.telemetry->rc.ch4;
-            msg.ch5 = vehicle.telemetry->rc.ch5;
-            msg.ch6 = vehicle.telemetry->rc.ch6;
-            msg.ch7 = vehicle.telemetry->rc.ch7;
-            msg.ch8 = vehicle.telemetry->rc.ch8;
-            msg.ch9 = vehicle.telemetry->rc.ch9;
-            msg.ch10 = vehicle.telemetry->rc.ch10;
-            msg.ch11 = vehicle.telemetry->rc.ch11;
-            msg.ch12 = vehicle.telemetry->rc.ch12;
-            msg.ch13 = vehicle.telemetry->rc.ch13;
-            msg.ch14 = vehicle.telemetry->rc.ch14;
-            msg.ch15 = vehicle.telemetry->rc.ch15;
-            msg.ch16 = vehicle.telemetry->rc.ch16;
-            msg.ch17 = vehicle.telemetry->rc.ch17;
-            msg.ch18 = vehicle.telemetry->rc.ch18;
-            msg.frame_lost = vehicle.telemetry->rc.frame_lost;
-            msg.failsafe = vehicle.telemetry->rc.failsafe;
-            msg.reserve = vehicle.telemetry->rc.reserve;
-            RCPublisher.publish(msg);
-            vehicle.telemetry->eraseNewcomeFlag(0xFB);
-        }
-        if(vehicle.telemetry->newcome & 0x02)
-        {
-            diablo_sdk::OSDK_POWER msg;
-            msg.battery_voltage = vehicle.telemetry->power.voltage;
-            msg.battery_current = vehicle.telemetry->power.current;
-            msg.battery_capacitor_energy = vehicle.telemetry->power.capacitor_energy;
-            msg.battery_power_percent = vehicle.telemetry->power.power_percent;
-            POWERPublisher.publish(msg);
-            //printf("Power:\nVoltage:\t%f\nCurrent:\t%f\nCap_EN:\t%f\nPercent:\t%u\n", msg.battery_voltage, msg.battery_current, msg.battery_current, msg.battery_power_percent);
-            vehicle.telemetry->eraseNewcomeFlag(0xFD);
-        }
-        if(vehicle.telemetry->newcome & 0x01)
-        {
-            diablo_sdk::OSDK_LEGMOTORS msg;
-            msg.left_hip_enc_rev = vehicle.telemetry->motors.left_hip.rev;
-            msg.left_hip_pos = vehicle.telemetry->motors.left_hip.pos;
-            msg.left_hip_vel = vehicle.telemetry->motors.left_hip.vel;
-            msg.left_hip_iq = vehicle.telemetry->motors.left_hip.iq;
-
-            msg.left_knee_enc_rev = vehicle.telemetry->motors.left_knee.rev;
-            msg.left_knee_pos = vehicle.telemetry->motors.left_knee.pos;
-            msg.left_knee_vel = vehicle.telemetry->motors.left_knee.vel;
-            msg.left_knee_iq = vehicle.telemetry->motors.left_knee.iq;
-
-            msg.left_wheel_enc_rev = vehicle.telemetry->motors.left_wheel.rev;
-            msg.left_wheel_pos = vehicle.telemetry->motors.left_wheel.pos;
-            msg.left_wheel_vel = vehicle.telemetry->motors.left_wheel.vel;
-            msg.left_wheel_iq = vehicle.telemetry->motors.left_wheel.iq;
-
-            msg.right_hip_enc_rev = vehicle.telemetry->motors.right_hip.rev;
-            msg.right_hip_pos = vehicle.telemetry->motors.right_hip.pos;
-            msg.right_hip_vel = vehicle.telemetry->motors.right_hip.vel;
-            msg.right_hip_iq = vehicle.telemetry->motors.right_hip.iq;
-
-            msg.right_knee_enc_rev = vehicle.telemetry->motors.right_knee.rev;
-            msg.right_knee_pos = vehicle.telemetry->motors.right_knee.pos;
-            msg.right_knee_vel = vehicle.telemetry->motors.right_knee.vel;
-            msg.right_knee_iq =  vehicle.telemetry->motors.right_knee.iq;
-
-            msg.right_wheel_enc_rev = vehicle.telemetry->motors.right_wheel.rev;
-            msg.right_wheel_pos = vehicle.telemetry->motors.right_wheel.pos;
-            msg.right_wheel_vel = vehicle.telemetry->motors.right_wheel.vel;
-            msg.right_wheel_iq = vehicle.telemetry->motors.right_wheel.iq;
-
-            LEGMOTORSPublisher.publish(msg);
+        if(vehicle.telemetry->newcome & 0x01){
+            left_speed_1 = vehicle.telemetry->motors.left_wheel.vel;
+            right_speed_1 = vehicle.telemetry->motors.right_wheel.vel;
             vehicle.telemetry->eraseNewcomeFlag(0xFE);
         }
+
+        auto startTime = std::chrono::high_resolution_clock::now();
+
+        right_dist = (right_speed_1)*radius*duration;
+        left_dist = (left_speed_1)*radius*duration;
+        
+        centre_dist = (right_dist + left_dist)/2;
+        
+        theta = theta_old + std::asin((right_dist-left_dist)/0.53);
+
+        if(theta > 2*M_PI){
+            theta = theta - 2*M_PI;
+        }
+        if(theta < 0){
+            theta = theta + 2*M_PI;
+        }
+        xcor = xold + (centre_dist)*std::cos(theta);
+        ycor = yold + (centre_dist)*std::sin(theta);
+
+        diablo_base::coors crs;
+        crs.x = xcor;
+        crs.y = ycor;
+        crs.theta = theta;
+        COORPub.publish(crs);
+
+        tf2::Quaternion quaternion;
+        tf2::Matrix3x3 rotation;
+        rotation.setRPY(0, 0, theta); 
+        rotation.getRotation(quaternion);
+
+        broadcaster.sendTransform(
+            tf::StampedTransform(
+            tf::Transform(tf::Quaternion(quaternion.x(), quaternion.y(), quaternion.z(), quaternion.w()), tf::Vector3(xcor, ycor, 0)),
+            ros::Time::now(),"odom", "base_link")
+        );
+
+        broadcaster.sendTransform(
+            tf::StampedTransform(
+            tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.3, 0, 1.5)),
+            ros::Time::now(),"base_link", "laser")
+        );
+
+        nav_msgs::Odometry odom_data;
+        odom_data.header.frame_id = "odom";
+        odom_data.child_frame_id = "base_link";
+        odom_data.pose.pose.position.x = xcor;
+        odom_data.pose.pose.position.y = ycor;
+        odom_data.pose.pose.position.z = 0;
+        odom_data.pose.pose.orientation.x = quaternion.x();
+        odom_data.pose.pose.orientation.y = quaternion.y();
+        odom_data.pose.pose.orientation.z = quaternion.z();
+        odom_data.pose.pose.orientation.w = quaternion.w();
+        odom_data.twist.twist.linear.x= ((right_speed_1+left_speed_1)/2)*std::cos(theta); 
+        odom_data.twist.twist.linear.y= ((right_speed_1+left_speed_1)/2)*std::cos(theta); 
+        odom_data.twist.twist.linear.z= 0;
+        odom_data.twist.twist.angular.x=0;
+        odom_data.twist.twist.angular.y=0;
+        odom_data.twist.twist.angular.z=(theta-theta_old)/duration;
+        ODOMPub.publish(odom_data);
+
+        xold = xcor;
+        yold = ycor;
+        theta_old = theta;
+
         ros::spinOnce();
         loop_rate.sleep();
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - startTime).count() / 1000000.00 ;
     }
     return 0;
 }

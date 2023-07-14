@@ -30,6 +30,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   
   <depend>roscpp</depend>
+  <depend>diablo_sdk</depend>
   <depend>rospy</depend>
   <depend>geometry_msgs</depend>
   <depend>serial</depend>
