@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
   ros::NodeHandle n("~");
 
   DiabloRobot robot(&n);
-  if (robot.Initialize()) {
+  if (!robot.Initialize()) {
     ROS_ERROR("Failed to initialize robot");
     return -1;
   }

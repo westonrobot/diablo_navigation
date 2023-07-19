@@ -14,10 +14,16 @@ namespace westonrobot {
 DiabloRobot::DiabloRobot(ros::NodeHandle* nh) : nh_(nh) {}
 
 bool DiabloRobot::Initialize() {
-  if (hal_.init()) return false;
+  if (hal_.init()) {
+    ROS_ERROR("Failed to initialize HAL");
+    return false;
+  }
 
   vehicle_ = std::make_unique<DIABLO::OSDK::Vehicle>(&hal_);
-  if (vehicle_->init()) return false;
+  if (vehicle_->init()) {
+    ROS_ERROR("Failed to initialize Vehicle");
+    return false;
+  }
   vehicle_->telemetry->activate();
   movement_controller_ = vehicle_->movement_ctrl;
 
@@ -59,8 +65,10 @@ void DiabloRobot::TwistCmdCallback(const geometry_msgs::Twist::ConstPtr& msg) {
 
 void DiabloRobot::Update() {
   if (vehicle_->telemetry->newcome & 0x01) {
-    float right_speed_ = vehicle_->telemetry->motors.left_wheel.vel;
-    float left_speed_ = vehicle_->telemetry->motors.right_wheel.vel;
+    float left_speed_ =
+        vehicle_->telemetry->motors.left_wheel.vel * kWheelRadius;
+    float right_speed_ =
+        vehicle_->telemetry->motors.right_wheel.vel * kWheelRadius;
     vehicle_->telemetry->eraseNewcomeFlag(0xFE);
 
     if (is_first_run_) {
@@ -81,13 +89,17 @@ void DiabloRobot::Update() {
     position_y_ += linear_speed * std::sin(theta_) * dt;
     theta_ += angular_speed * dt;
 
-    // limit theta between 0 and 2pi
-    if (theta_ > 2 * M_PI) {
+    // limit theta between -pi and pi
+    if (theta_ > M_PI) {
       theta_ = theta_ - 2 * M_PI;
     }
-    if (theta_ < 0) {
+    if (theta_ < -M_PI) {
       theta_ = theta_ + 2 * M_PI;
     }
+
+    ROS_INFO("Wheel speed: %f, %f, Robot speed: %f, %f, Robot pose: %f, %f, %f",
+             left_speed_, right_speed_, linear_speed, angular_speed,
+             position_x_, position_y_, theta_ / M_PI * 180.0);
 
     geometry_msgs::Quaternion odom_quat =
         tf::createQuaternionMsgFromYaw(theta_);

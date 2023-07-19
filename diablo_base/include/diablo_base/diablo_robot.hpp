@@ -20,7 +20,7 @@
 
 namespace westonrobot {
 class DiabloRobot {
-  static constexpr float kWheelRadius = 0.09;
+  static constexpr float kWheelRadius = 0.095;
   static constexpr float kWheelTrack = 0.48;
 
  public:
