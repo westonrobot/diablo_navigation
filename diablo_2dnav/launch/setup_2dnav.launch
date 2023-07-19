@@ -1,6 +1,6 @@
 <launch>
 
-    <node name="test_base" pkg="diablo_base" type="test_base" output="screen"/>
+    <node name="nav_base" pkg="diablo_base" type="robot_navigation" output="screen"/>
     <include file="$(find rplidar_ros)/launch/rplidar_a2m8.launch" />
 
 </launch> 

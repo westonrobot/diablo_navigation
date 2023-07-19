@@ -23,14 +23,12 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 include_directories(
-  ../../diablo-sdk-v1/api/inc
-  #inc/diablo_base
+  ${catkin_INCLUDE_DIRS}
+  ../../diablo_sdk/include
 )
 
 add_message_files(
   FILES
-  angles.msg
-  disps.msg
   coors.msg
 )
 
@@ -49,10 +47,6 @@ catkin_package(
 		# DEPENDS system_lib
     )
 
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
 link_libraries(
         ${catkin_LIBRARIES}
     )
@@ -82,11 +76,11 @@ link_libraries(
 # # add_dependencies(formula_2 diablo_sdk_generate_messages_cpp)
 # target_link_libraries(formula_2 PRIVATE Threads::Threads diablo_sdk)
 
-add_executable(OdomBroadcaster ${CMAKE_CURRENT_SOURCE_DIR}/src/OdomBroadcaster.cpp)
-target_link_libraries(OdomBroadcaster PRIVATE Threads::Threads diablo_sdk)
+add_executable(odom_broadcaster ${CMAKE_CURRENT_SOURCE_DIR}/src/odom_broadcaster.cpp)
+target_link_libraries(odom_broadcaster PRIVATE Threads::Threads diablo_sdk_core)
 
-add_executable(test_base ${CMAKE_CURRENT_SOURCE_DIR}/src/read_and_control/test_base.cpp)
-target_link_libraries(test_base PRIVATE Threads::Threads diablo_sdk)
+add_executable(robot_navigation ${CMAKE_CURRENT_SOURCE_DIR}/src/robot_navigation.cpp)
+target_link_libraries(robot_navigation PRIVATE Threads::Threads diablo_sdk_core)
 
 # add_executable(test_base_custom 
 # ${CMAKE_CURRENT_SOURCE_DIR}/src/read_and_control/test_base_custom.cpp)
