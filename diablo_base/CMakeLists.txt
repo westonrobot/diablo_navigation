@@ -50,49 +50,11 @@ catkin_package(
 
 include_directories(
     ${catkin_INCLUDE_DIRS}
+    include
 )
 
-link_libraries(
-    ${catkin_LIBRARIES}
-)
+add_executable(diablo_base src/diablo_base.cpp)
+target_link_libraries(diablo_base PRIVATE ${catkin_LIBRARIES})
 
-add_executable(odom_broadcaster src/odom_broadcaster.cpp)
-target_link_libraries(odom_broadcaster PRIVATE ${catkin_LIBRARIES})
-
-add_executable(robot_navigation src/robot_navigation.cpp)
-target_link_libraries(robot_navigation PRIVATE ${catkin_LIBRARIES})
-
-# add_executable(tf_listener 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/test_transform/tf_listener.cpp)
-# # add_dependencies(tf_listener diablo_sdk_generate_messages_cpp)
-# target_link_libraries(tf_listener PRIVATE Threads::Threads diablo_sdk)
-
-# add_executable(tf_broadcaster 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/test_transform/tf_broadcaster.cpp)
-# # add_dependencies(tf_broadcaster diablo_sdk_generate_messages_cpp)
-# target_link_libraries(tf_broadcaster PRIVATE Threads::Threads diablo_sdk)
-
-# add_executable(formula_quat 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/test_formula/formula_quat.cpp)
-# # add_dependencies(formula_quat diablo_sdk_generate_messages_cpp)
-# target_link_libraries(formula_quat PRIVATE Threads::Threads diablo_sdk)
-
-# add_executable(formula_1 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/test_formula/formula_1.cpp)
-# # add_dependencies(formula_1 diablo_sdk_generate_messages_cpp)
-# target_link_libraries(formula_1 PRIVATE Threads::Threads diablo_sdk)
-
-# add_executable(formula_2 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/test_formula/formula_2.cpp)
-# # add_dependencies(formula_2 diablo_sdk_generate_messages_cpp)
-# target_link_libraries(formula_2 PRIVATE Threads::Threads diablo_sdk)
-
-# add_executable(test_base_custom 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/read_and_control/test_base_custom.cpp)
-# # add_dependencies(test_base_custom diablo_sdk_generate_messages_cpp)
-# target_link_libraries(test_base_custom PRIVATE Threads::Threads diablo_sdk)
-
-# add_executable(testing 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/testing.cpp)
-# # add_dependencies(testing diablo_sdk_generate_messages_cpp)
-# target_link_libraries(testing PRIVATE Threads::Threads diablo_sdk)
+add_executable(diablo_base_node src/main.cpp src/diablo_robot.cpp)
+target_link_libraries(diablo_base_node PRIVATE ${catkin_LIBRARIES})
