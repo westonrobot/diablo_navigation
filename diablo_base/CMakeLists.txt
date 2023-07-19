@@ -20,10 +20,10 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare ROS messages, services and actions ##
 ################################################
 
-add_message_files(
-  FILES
-  coors.msg
-)
+# add_message_files(
+#   FILES
+#   coors.msg
+# )
 
 generate_messages(
   DEPENDENCIES

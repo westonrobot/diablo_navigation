@@ -20,6 +20,9 @@
 
 namespace westonrobot {
 class DiabloRobot {
+  static constexpr float kWheelRadius = 0.09;
+  static constexpr float kWheelTrack = 0.48;
+
  public:
   DiabloRobot(ros::NodeHandle* nh);
   ~DiabloRobot() = default;
@@ -36,6 +39,10 @@ class DiabloRobot {
   ros::Subscriber cmd_sub_;
   tf::TransformBroadcaster tf_broadcaster_;
 
+  std::string odom_frame_ = "odom";
+  std::string base_frame_ = "base_link";
+  std::string odom_topic_name_ = "odom";
+
   DIABLO::OSDK::HAL_Pi hal_;
   std::unique_ptr<DIABLO::OSDK::Vehicle> vehicle_;
   DIABLO::OSDK::Movement_Ctrl* movement_controller_;
@@ -43,14 +50,10 @@ class DiabloRobot {
   bool is_first_run_ = true;
   ros::Time last_time_;
 
-  float right_speed_1_ = 0;
-  float left_speed_1_ = 0;
-
-  float xcor_ = 0;
-  float ycor_ = 0;
+  float position_x_ = 0;
+  float position_y_ = 0;
   float theta_ = 0;
-  float xold_, yold_, theta_old_ = 0;
-  
+
   float radius_ = 0.09;
   float right_dist_ = 0;
   float left_dist_ = 0;
