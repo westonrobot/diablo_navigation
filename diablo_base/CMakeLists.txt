@@ -25,12 +25,12 @@ find_package(catkin REQUIRED COMPONENTS
 #   coors.msg
 # )
 
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-  #message_generation
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+#   geometry_msgs
+#   #message_generation
+# )
 
 ###################################
 ## catkin specific configuration ##

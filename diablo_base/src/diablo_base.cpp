@@ -21,7 +21,7 @@
 #include "diablo_sdk/OSDK_LEGMOTORS.h"
 #include "diablo_utils/diablo_tools/osdk_vehicle.hpp"
 #include "diablo_utils/diablo_tools/onboard_sdk_uart_protocol.h"
-#include "diablo_base/coors.h"
+// #include "diablo_base/coors.h"
 
 float right_speed_1, left_speed_1 = 0;
 float xcor, ycor, theta = 0;
@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
   vehicle.telemetry->configUpdate();
 
   ros::Publisher ODOMPub = n.advertise<nav_msgs::Odometry>("/odom", 10);
-  ros::Publisher COORPub = n.advertise<diablo_base::coors>("/coordinates", 10);
+//   ros::Publisher COORPub = n.advertise<diablo_base::coors>("/coordinates", 10);
   ros::Rate loop_rate(100);
   tf::TransformBroadcaster broadcaster;
 
@@ -107,11 +107,11 @@ int main(int argc, char** argv) {
     xcor = xold + (centre_dist)*std::cos(theta);
     ycor = yold + (centre_dist)*std::sin(theta);
 
-    diablo_base::coors crs;
-    crs.x = xcor;
-    crs.y = ycor;
-    crs.theta = theta;
-    COORPub.publish(crs);
+    // diablo_base::coors crs;
+    // crs.x = xcor;
+    // crs.y = ycor;
+    // crs.theta = theta;
+    // COORPub.publish(crs);
 
     tf2::Quaternion quaternion;
     tf2::Matrix3x3 rotation;
