@@ -1,16 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
-
 project(diablo_base)
 
-add_compile_options(
-		-std=c++17
-		-Wno-psabi
-)
+## Compile as C++11, supported in ROS Kinetic and newer
+# add_compile_options(-std=c++11)
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-add_definitions(-D_LOG_CONSOLE)
-
+## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   roscpp
@@ -22,10 +16,9 @@ find_package(catkin REQUIRED COMPONENTS
   diablo_sdk
 )
 
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ../../diablo_sdk/include
-)
+################################################
+## Declare ROS messages, services and actions ##
+################################################
 
 add_message_files(
   FILES
@@ -39,17 +32,35 @@ generate_messages(
   #message_generation
 )
 
+###################################
+## catkin specific configuration ##
+###################################
+
 catkin_package(
-        #  INCLUDE_DIRS include
-        #  LIBRARIES
-        CATKIN_DEPENDS
-        message_runtime
-		# DEPENDS system_lib
-    )
+    #  INCLUDE_DIRS include
+    #  LIBRARIES
+    CATKIN_DEPENDS
+    message_runtime
+    # DEPENDS system_lib
+)
+
+###########
+## Build ##
+###########
+
+include_directories(
+    ${catkin_INCLUDE_DIRS}
+)
 
 link_libraries(
-        ${catkin_LIBRARIES}
-    )
+    ${catkin_LIBRARIES}
+)
+
+add_executable(odom_broadcaster src/odom_broadcaster.cpp)
+target_link_libraries(odom_broadcaster PRIVATE ${catkin_LIBRARIES})
+
+add_executable(robot_navigation src/robot_navigation.cpp)
+target_link_libraries(robot_navigation PRIVATE ${catkin_LIBRARIES})
 
 # add_executable(tf_listener 
 # ${CMAKE_CURRENT_SOURCE_DIR}/src/test_transform/tf_listener.cpp)
@@ -75,12 +86,6 @@ link_libraries(
 # ${CMAKE_CURRENT_SOURCE_DIR}/src/test_formula/formula_2.cpp)
 # # add_dependencies(formula_2 diablo_sdk_generate_messages_cpp)
 # target_link_libraries(formula_2 PRIVATE Threads::Threads diablo_sdk)
-
-add_executable(odom_broadcaster ${CMAKE_CURRENT_SOURCE_DIR}/src/odom_broadcaster.cpp)
-target_link_libraries(odom_broadcaster PRIVATE Threads::Threads diablo_sdk_core)
-
-add_executable(robot_navigation ${CMAKE_CURRENT_SOURCE_DIR}/src/robot_navigation.cpp)
-target_link_libraries(robot_navigation PRIVATE Threads::Threads diablo_sdk_core)
 
 # add_executable(test_base_custom 
 # ${CMAKE_CURRENT_SOURCE_DIR}/src/read_and_control/test_base_custom.cpp)
