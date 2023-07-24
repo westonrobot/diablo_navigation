@@ -1,16 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
-
 project(diablo_base)
 
-add_compile_options(
-		-std=c++17
-		-Wno-psabi
-)
+## Compile as C++11, supported in ROS Kinetic and newer
+# add_compile_options(-std=c++11)
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-add_definitions(-D_LOG_CONSOLE)
-
+## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   roscpp
@@ -22,78 +16,45 @@ find_package(catkin REQUIRED COMPONENTS
   diablo_sdk
 )
 
-include_directories(
-  ../../diablo-sdk-v1/api/inc
-  #inc/diablo_base
-)
+################################################
+## Declare ROS messages, services and actions ##
+################################################
 
-add_message_files(
-  FILES
-  angles.msg
-  disps.msg
-  coors.msg
-)
+# add_message_files(
+#   FILES
+#   coors.msg
+# )
 
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-  #message_generation
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+#   geometry_msgs
+#   #message_generation
+# )
+
+###################################
+## catkin specific configuration ##
+###################################
 
 catkin_package(
-        #  INCLUDE_DIRS include
-        #  LIBRARIES
-        CATKIN_DEPENDS
-        message_runtime
-		# DEPENDS system_lib
-    )
+    #  INCLUDE_DIRS include
+    #  LIBRARIES
+    CATKIN_DEPENDS
+    message_runtime
+    # DEPENDS system_lib
+)
+
+###########
+## Build ##
+###########
 
 include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
+    ${catkin_INCLUDE_DIRS}
+    include
 )
-link_libraries(
-        ${catkin_LIBRARIES}
-    )
 
-# add_executable(tf_listener 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/test_transform/tf_listener.cpp)
-# # add_dependencies(tf_listener diablo_sdk_generate_messages_cpp)
-# target_link_libraries(tf_listener PRIVATE Threads::Threads diablo_sdk)
+add_executable(diablo_base src/diablo_base.cpp)
+target_link_libraries(diablo_base PRIVATE ${catkin_LIBRARIES})
 
-# add_executable(tf_broadcaster 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/test_transform/tf_broadcaster.cpp)
-# # add_dependencies(tf_broadcaster diablo_sdk_generate_messages_cpp)
-# target_link_libraries(tf_broadcaster PRIVATE Threads::Threads diablo_sdk)
-
-# add_executable(formula_quat 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/test_formula/formula_quat.cpp)
-# # add_dependencies(formula_quat diablo_sdk_generate_messages_cpp)
-# target_link_libraries(formula_quat PRIVATE Threads::Threads diablo_sdk)
-
-# add_executable(formula_1 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/test_formula/formula_1.cpp)
-# # add_dependencies(formula_1 diablo_sdk_generate_messages_cpp)
-# target_link_libraries(formula_1 PRIVATE Threads::Threads diablo_sdk)
-
-# add_executable(formula_2 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/test_formula/formula_2.cpp)
-# # add_dependencies(formula_2 diablo_sdk_generate_messages_cpp)
-# target_link_libraries(formula_2 PRIVATE Threads::Threads diablo_sdk)
-
-add_executable(OdomBroadcaster ${CMAKE_CURRENT_SOURCE_DIR}/src/OdomBroadcaster.cpp)
-target_link_libraries(OdomBroadcaster PRIVATE Threads::Threads diablo_sdk)
-
-add_executable(test_base ${CMAKE_CURRENT_SOURCE_DIR}/src/read_and_control/test_base.cpp)
-target_link_libraries(test_base PRIVATE Threads::Threads diablo_sdk)
-
-# add_executable(test_base_custom 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/read_and_control/test_base_custom.cpp)
-# # add_dependencies(test_base_custom diablo_sdk_generate_messages_cpp)
-# target_link_libraries(test_base_custom PRIVATE Threads::Threads diablo_sdk)
-
-# add_executable(testing 
-# ${CMAKE_CURRENT_SOURCE_DIR}/src/testing.cpp)
-# # add_dependencies(testing diablo_sdk_generate_messages_cpp)
-# target_link_libraries(testing PRIVATE Threads::Threads diablo_sdk)
+add_executable(diablo_base_node src/main.cpp src/diablo_robot.cpp)
+target_link_libraries(diablo_base_node PRIVATE ${catkin_LIBRARIES})

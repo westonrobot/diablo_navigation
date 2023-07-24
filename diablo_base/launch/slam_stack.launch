@@ -2,7 +2,7 @@
 
     <node name="robot_status_example" pkg="diablo_sdk" type="robot_status_example" />
 
-    <node name="status_node" pkg="diablo_base" type="OdomBroadcaster" />
+    <node name="odom_status" pkg="diablo_base" type="odom_broadcaster" />
 
     <include file="$(find rplidar_ros)/launch/rplidar_a2m8.launch" />
 
