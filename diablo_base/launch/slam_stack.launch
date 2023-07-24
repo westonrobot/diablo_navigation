@@ -1,11 +1,9 @@
 <launch>
 
-    <node name="robot_status_example" pkg="diablo_sdk" type="robot_status_example" />
-
-    <node name="odom_status" pkg="diablo_base" type="odom_broadcaster" />
-
+    <node name="diablo_base" pkg="diablo_base" type="diablo_base_node" />
     <include file="$(find rplidar_ros)/launch/rplidar_a2m8.launch" />
-
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <param name="robot_description" textfile="$(find diablo_description)/urdf/diablo_robot.urdf" />
     <node name="gmapping" pkg="gmapping" type="slam_gmapping">
         <remap from="scan" to="scan" />
         <param name="base_frame" value="base_link" />

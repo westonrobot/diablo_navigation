@@ -115,6 +115,10 @@ void DiabloRobot::Update() {
     tf_msg.transform.rotation = odom_quat;
     tf_broadcaster_.sendTransform(tf_msg);
 
+    // tf_broadcaster_.sendTransform(tf::StampedTransform(
+    //     tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.3, 0, 1.5)),
+    //     ros::Time::now(), "base_link", "laser"));
+
     nav_msgs::Odometry odom_msg;
     odom_msg.header.stamp = current_time;
     odom_msg.header.frame_id = odom_frame_;
