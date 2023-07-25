@@ -50,7 +50,7 @@ $ rosrun rviz rviz
 ```
 Once you see that the map is complete on RVIZ, save the map in diablo_base/maps
 ```bash
-$ mapserver mapsaver
+$ rosrun map_server map_saver -f <map_name>
 ```
 <br> 
 </br>
