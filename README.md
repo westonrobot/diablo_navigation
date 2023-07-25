@@ -3,7 +3,7 @@
 
 ## About
 #
-This software package provides a ROS1 c++ functionality to implement SLAM and Navigation algorithms using Direct Drive Technology's robot called "Diablo"
+This software package provides a ROS1 C++ functionality to implement SLAM and Navigation algorithms using Direct Drive Technology's robot called "Diablo"
 <br> 
 </br>
 
@@ -18,12 +18,12 @@ $ cd catkin_ws/src
 
 Clone the following repositories:
 ```bash
-$ git clone //diablo_sdk
-$ git clone //rplidar_ros
+$ git clone https://github.com/DDTRobot/diablo_sdk.git
+$ git clone https://github.com/Slamtec/rplidar_ros.git
 ```
-Ensure to install its own dependencies:
-- diablo_sdk ( )
-- rplidar_ros ( )
+Ensure to also install the dependencies of these repositories:
+- diablo_sdk (https://github.com/DDTRobot/diablo_sdk.git)
+- rplidar_ros (https://github.com/Slamtec/rplidar_ros.git)
 
 Install other dependencies:
 ```bash
@@ -48,6 +48,12 @@ $ catkin_make
 $ roslaunch diablo_base slam_gmapping.launch
 $ rosrun rviz rviz
 ```
+Once you see that the map is complete on RVIZ, save the map in diablo_base/maps
+```bash
+$ rosrun map_server map_saver -f <map_name>
+```
+<br> 
+</br>
 
 ### Perform navigation
 ```bash
@@ -55,4 +61,4 @@ $ roslaunch diablo_2dnav setup_2dnav.launch
 $ roslaunch diablo_2dnav start_2dnav.launch
 $ rosrun rviz rviz
 ```
-
+Current Pose Estimate and 2D Nav Goal can be set through the RVIZ interface to test navigation
