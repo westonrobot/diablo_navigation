@@ -53,8 +53,5 @@ include_directories(
     include
 )
 
-add_executable(diablo_base src/diablo_base.cpp)
-target_link_libraries(diablo_base PRIVATE ${catkin_LIBRARIES})
-
 add_executable(diablo_base_node src/main.cpp src/diablo_robot.cpp)
 target_link_libraries(diablo_base_node PRIVATE ${catkin_LIBRARIES})

@@ -1,35 +1,31 @@
 # Diablo ROS Workspace
 
-
-## About
-#
-This software package provides a ROS1 C++ functionality to implement SLAM and Navigation algorithms using Direct Drive Technology's robot called "Diablo"
-<br> 
-</br>
+This repository provides a ROS1 navigation setup for the two leg-wheel [Diablo robot](https://docs.westonrobot.net/robot_user_guide/direct_drive_robot/diablo.html). Please note that this setup is mainly for demonstration purpose and you may need to make adjustments and fine tuning to use it for your application.
 
 ## Build and Install
-#
 
 ### Install the dependencies
+
+Create a catkin workspace if you don't have one yet:
+
 ```bash
 $ mkdir -p catkin_ws/src
 $ cd catkin_ws/src
 ```
 
-Clone the following repositories:
-```bash
-$ git clone https://github.com/DDTRobot/diablo_sdk.git
-$ git clone https://github.com/Slamtec/rplidar_ros.git
-```
-Ensure to also install the dependencies of these repositories:
-- diablo_sdk (https://github.com/DDTRobot/diablo_sdk.git)
-- rplidar_ros (https://github.com/Slamtec/rplidar_ros.git)
+Clone the driver packages for the robot and Lidar. Please ensure you've also installed the dependencies of them. You can refer to their documentations for more details. 
 
-Install other dependencies:
 ```bash
-$ sudo apt install ros-<DISTRO>-navigation
-$ sudo apt install ros-<DISTRO>-gmapping
-$ sudo apt install ros-<DISTRO>-amcl
+$ git clone https://github.com/westonrobot/diablo_sdk.git
+$ git clone https://github.com/westonrobot/rplidar_ros
+```
+
+Install the ROS navigation packages:
+
+```bash
+$ sudo apt install ros-$ROS_DISTRO-navigation
+$ sudo apt install ros-$ROS_DISTRO-gmapping
+$ sudo apt install ros-$ROS_DISTRO-amcl
 ```
 
 ### Build the workspace
@@ -37,28 +33,28 @@ $ sudo apt install ros-<DISTRO>-amcl
 $ cd catkin_ws
 $ catkin_make
 ```
-<br> 
-</br>
 
 ## Example usage
-#
 
-### Generate map
+### Mapping
+
+Launch the gmapping nodes:
+
 ```bash
-$ roslaunch diablo_base slam_gmapping.launch
+$ roslaunch diablo_navigation start_mapping.launch
 $ rosrun rviz rviz
 ```
+
 Once you see that the map is complete on RVIZ, save the map in diablo_base/maps
 ```bash
 $ rosrun map_server map_saver -f <map_name>
 ```
-<br> 
-</br>
 
-### Perform navigation
+### Navigation
 ```bash
-$ roslaunch diablo_2dnav setup_2dnav.launch
-$ roslaunch diablo_2dnav start_2dnav.launch
+$ roslaunch diablo_navigation bringup_robot.launch
+$ roslaunch diablo_navigation start_navigation.launch
 $ rosrun rviz rviz
 ```
+
 Current Pose Estimate and 2D Nav Goal can be set through the RVIZ interface to test navigation

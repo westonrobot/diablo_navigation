@@ -1,5 +1,4 @@
 <launch>
-
     <node name="diablo_base" pkg="diablo_base" type="diablo_base_node" output="screen"/>
     <include file="$(find rplidar_ros)/launch/rplidar_a2m8.launch" />
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
